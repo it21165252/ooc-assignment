@@ -1,34 +1,40 @@
 #include <iostream>
 #include <cmath>
-#define g 9.81  //ms^-2
 
-using namespace std;
+const double g = 9.81;
 
-int main(){
-    double u = 20.0; //m/s`
-    double angle = 45.0; //degrees
+double calculateHeight(double u, double angle_rad) {
+    return (u * u * sin(2 * angle_rad)) / (2 * g);
+}
 
-    cout<<"Enter the initial velocity of the object: ";
-    cin<<u;
+double calculateTimeOfFlight(double u, double angle_rad) {
+    return (2 * u * sin(angle_rad)) / g;
+}
 
-    cout<<"Enter the angle of projection: ";
-    cin<<angle;
- 
-    /********finding h***********/
+double calculateRange(double u, double angle_rad) {
+    return (u * u * sin(2 * angle_rad)) / g;
+}
 
-    double h = (u*u*sin(2*angle))/g;
+int main() {
+    double u, angle_degrees;
 
-    /********finding t***********/
+    std::cout << "Enter the initial velocity of the object (m/s): ";
+    std::cin >> u;
 
-    double t = (2*u*sin(angle))/g;
+    std::cout << "Enter the angle of projection (degrees): ";
+    std::cin >> angle_degrees;
 
-    /********finding range***********/
+    double angle_rad = angle_degrees * M_PI / 180.0;
 
-    double range = (2*u*u*sin(angle)*cos(angle))/g;
+    double height = calculateHeight(u, angle_rad);
+    double time_of_flight = calculateTimeOfFlight(u, angle_rad);
+    double range = calculateRange(u, angle_rad);
 
-    cout << "The height of the projectile is " << h << "m" << endl;
-    cout << "The time of flight is " << t << "s" << endl;
-    cout << "The range of the projectile is " << range << "m" << endl;
+    std::cout << "Initial velocity: " << u << " m/s\n";
+    std::cout << "Launch angle: " << angle_degrees << " degrees\n";
+    std::cout << "Height of the projectile: " << height << " meters\n";
+    std::cout << "Time of flight: " << time_of_flight << " seconds\n";
+    std::cout << "Horizontal range: " << range << " meters\n";
 
-
+    return 0;
 }
