@@ -14,6 +14,27 @@ void cleanData(const string& inputPath, const string& outputPath);
 
 void calculateStatistics(const string& inputPath);
 
+
+    vector<string> row; // one row
+    string line, word ,fname , heading;
+
+
+
+    cout<<"what type of file do you want to open? \n"
+        <<"1. Gas\n"
+        <<"2. Particle\n"
+        <<"Enter your choice: ";
+    cin>>type;
+
+    if(type == 1)
+        path = "./data/gas/";
+    else if(type == 2)
+        path = "./data/particle/";
+    else{
+        cout<<"Invalid choice";
+        continue;
+    }
+
 void splitDateAndTime(const string& inputPath, const string& outputPath);
 
 int main() {
