@@ -190,8 +190,49 @@ void calculateStatistics(const string& inputPath) {
         cout << endl;
     }
 
+
+
+
+    std::cout << "Enter the initial velocity of the object (m/s): ";
+    std::cin >> u;
+
+    std::cout << "Enter the angle of projection (degrees): ";
+    std::cin >> angle_degrees;
+
+    double angle_rad = angle_degrees * M_PI / 180.0;
+
+    double height = calculateHeight(u, angle_rad);
+    double time_of_flight = calculateTimeOfFlight(u, angle_rad);
+    double range = calculateRange(u, angle_rad);
+
+    std::cout << "Initial velocity: " << u << " m/s\n";
+    std::cout << "Launch angle: " << angle_degrees << " degrees\n";
+    std::cout << "Height of the projectile: " << height << " meters\n";
+    std::cout << "Time of flight: " << time_of_flight << " seconds\n";
+    std::cout << "Horizontal range: " << range << " meters\n";
+    /******************splitng date and time*************************/
+    
+    fstream fileRead5 ("temp2.csv", ios::in);
+    if(type == 1)
+        path = "output/gas/";
+
+    else
+        path = "output/particle/";
+
+    fstream fileWrite5 (path + fname + "-processed.csv", ios::out);
+
+    while(getline(fileRead5 , line)){
+        
+        row.clear();
+        stringstream str(line +','); // add , to make sorting easier
+        while(getline(str, word, ',')){
+            row.push_back(word);
+        }
+        stringstream str2(row[0]); 
+
     fileRead.close();
 }
+
 
 void splitDateAndTime(const string& inputPath, const string& outputPath) {
     ifstream fileRead(inputPath);
