@@ -21,14 +21,7 @@ while(choice == "c"){
     vector<string> row; // one row
     string line, word ,fname , heading;
 
-    cout<<"Turing Moore Engineering Environmental Data Analyser 1.0"<<endl;
-    cout<<"your name"<<endl;
-    cout<<"221202072"<<endl;
-    cout<<"02/09/2022"<<endl;
-    cout<<"Level of mark- HD"<<endl;
-    cout<<"How to use the program\n"
-        <<"* Enter name of the file eg- test3"<<endl;
-    cout<<endl;
+
 
     cout<<"what type of file do you want to open? \n"
         <<"1. Gas\n"
