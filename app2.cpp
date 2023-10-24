@@ -3,220 +3,193 @@
 #include <string>
 #include <vector>
 #include <sstream>
- 
+#include <iomanip>
+
 using namespace std;
- 
-int main(){
 
-string choice = "c";
-string path;
-
-while(choice == "c"){
+enum class FileType { Gas, Particle };
 
 
-    int type;
-    int newNumOfRows = 0;
-    int newNumOfCols = 0;
+void cleanData(const string& inputPath, const string& outputPath);
 
-    vector<string> row; // one row
-    string line, word ,fname , heading;
+void calculateStatistics(const string& inputPath);
 
-    cout<<"Turing Moore Engineering Environmental Data Analyser 1.0"<<endl;
-    cout<<"your name"<<endl;
-    cout<<"221202072"<<endl;
-    cout<<"02/09/2022"<<endl;
-    cout<<"Level of mark- HD"<<endl;
-    cout<<"How to use the program\n"
-        <<"* Enter name of the file eg- test3"<<endl;
-    cout<<endl;
+void splitDateAndTime(const string& inputPath, const string& outputPath);
 
-    cout<<"what type of file do you want to open? \n"
-        <<"1. Gas\n"
-        <<"2. Particle\n"
-        <<"Enter your choice: ";
-    cin>>type;
+int main() {
+    string choice = "c";
 
-    if(type == 1)
-        path = "./data/gas/";
-    else if(type == 2)
-        path = "./data/particle/";
-    else{
-        cout<<"Invalid choice";
-        continue;
+    while (choice == "c") {
+        FileType fileType;
+        string path, fname;
+
+        cout << "Turing Moore Engineering Environmental Data Analyser 1.0" << endl;
+        cout << "Your name" << endl;
+        cout << "221202072" << endl;
+        cout << "02/09/2022" << endl;
+        cout << "Level of mark - HD" << endl;
+        cout << "How to use the program" << endl;
+        cout << "* Enter the name of the file, e.g., test3" << endl;
+
+        cout << "What type of file do you want to open?" << endl;
+        cout << "1. Gas" << endl;
+        cout << "2. Particle" << endl;
+        cout << "Enter your choice: ";
+        int typeChoice;
+        cin >> typeChoice;
+
+        if (typeChoice == 1)
+            fileType = FileType::Gas;
+        else if (typeChoice == 2)
+            fileType = FileType::Particle;
+        else {
+            cout << "Invalid choice" << endl;
+            continue;
+        }
+
+        cout << "Enter the file name: ";
+        cin >> fname;
+        fname += ".csv";
+
+        if (fileType == FileType::Gas)
+            path = "./data/gas/";
+        else if (fileType == FileType::Particle)
+            path = "./data/particle/";
+
+        string fullPath = path + fname;
+
+        ifstream fileRead(fullPath);
+        if (!fileRead.is_open()) {
+            cout << "Unable to open " << fname << " file" << endl;
+            system("pause");
+            return -1;
+        }
+
+        // Clean data
+        string tempOutputPath = "temp.csv";
+        cleanData(fullPath, tempOutputPath);
+
+        // Calculate statistics
+        calculateStatistics(tempOutputPath);
+
+        // Split date and time
+        string processedOutputPath = "processed.csv";
+        splitDateAndTime(tempOutputPath, processedOutputPath);
+
+        cout << "Data processing completed." << endl;
+
+        // Remove temporary files
+        remove(tempOutputPath.c_str());
+
+        cout << "Press 'c' to continue or 'e' to quit: ";
+        cin >> choice;
     }
 
-    cout<<"Enter the file name: ";
-    cin>>fname;
-    fname += ".csv";
-    path += fname;
+    return 0;
+}
 
-    fstream fileRead (path, ios::in);
-    fstream fileWrite ("temp.csv", ios::out);
-    
-    //check if file can be opened
-    if(fileRead.is_open()){
-        cout<<fname <<" file successfully opened"<<endl;
-    }else{
-        cout<<"Unable to open " << fname << " file"<<endl;
-        remove( "temp.csv" );
-        system("pause");
-        return -1;
+void cleanData(const string& inputPath, const string& outputPath) {
+    ifstream fileRead(inputPath);
+    ofstream fileWrite(outputPath);
+
+    if (!fileRead.is_open()) {
+        cout << "Unable to open input file for cleaning" << endl;
+        return;
     }
 
-    //remove rows
-    getline(fileRead, heading); //store heading
-    while(getline(fileRead, line)){
+    string heading;
+    getline(fileRead, heading); // Store heading
+    fileWrite << heading << endl; // Write heading to output
 
-        row.clear();
-
-        stringstream str(line+','); // add , to make the sorting easier
-        while(getline(str, word, ','))
+    string line;
+    while (getline(fileRead, line)) {
+        vector<string> row;
+        stringstream str(line + ',');
+        string word;
+        while (getline(str, word, ','))
             row.push_back(word);
 
-        int checkForEmptyCol = 0; // check for empty rows
-
-        for( int i = 1; i < row.size(); i++){
-            if(row[i].empty()){
+        int checkForEmptyCol = 0;
+        for (int i = 1; i < row.size(); i++) {
+            if (!row[i].empty()) {
                 checkForEmptyCol++;
             }
         }
 
-        if(checkForEmptyCol != row.size()-1){ 
-
-            for(int i = 0; i < row.size(); i++){
+        if (checkForEmptyCol != row.size() - 1) {
+            for (int i = 0; i < row.size(); i++) {
                 fileWrite << row[i];
-                if(i != row.size()-1)
+                if (i != row.size() - 1)
                     fileWrite << ",";
             }
-            fileWrite << "\n";
+            fileWrite << endl;
         }
-
     }
+
     fileRead.close();
     fileWrite.close();
+}
 
-    // remove colomns
-    fstream fileRead2 ("temp.csv", ios::in);
-    fstream fileWrite2 ("temp2.csv", ios::out);
-    
-     vector<int> finalCol;
-     int checkEmptyCol [row.size()] = {0};
+void calculateStatistics(const string& inputPath) {
+    ifstream fileRead(inputPath);
 
+    if (!fileRead.is_open()) {
+        cout << "Unable to open input file for calculating statistics" << endl;
+        return;
+    }
 
-    //check for empty colomns
-    while(getline(fileRead2, line)){
+    string line;
+    getline(fileRead, line); // Skip heading
 
-        row.clear();
-        
-        stringstream str(line + ','); // add , to make the sorting easier
-        while(getline(str, word, ','))
+    int newNumOfCols = 0;
+    vector<float> highest, lowest, dailyAverage;
+    vector<string> highestDate, lowestDate;
+    bool initialized = false;
+
+    while (getline(fileRead, line)) {
+        vector<string> row;
+        stringstream str(line + ',');
+        string word;
+        while (getline(str, word, ','))
             row.push_back(word);
 
+        if (!initialized) {
+            newNumOfCols = row.size() - 1;
+            highest.resize(newNumOfCols);
+            lowest.resize(newNumOfCols, 100.0);
+            dailyAverage.resize(newNumOfCols);
+            highestDate.resize(newNumOfCols);
+            lowestDate.resize(newNumOfCols);
+            initialized = true;
+        }
 
-        for( int i = 0; i < row.size(); i++){
-   
-            if(row[i].empty()){
+        for (int i = 1; i < row.size(); i++) {
+            if (!row[i].empty()) {
+                float value = stof(row[i]);
+                dailyAverage[i - 1] += value;
 
-            }else{
-                checkEmptyCol[i] = 1;
+                if (value < lowest[i - 1]) {
+                    lowest[i - 1] = value;
+                    lowestDate[i - 1] = row[0];
+                }
+
+                if (value > highest[i - 1]) {
+                    highest[i - 1] = value;
+                    highestDate[i - 1] = row[0];
+                }
             }
         }
     }
 
-    //arry with colom indexs that are not empty
-    for( int i = 0; i < sizeof(checkEmptyCol)/sizeof(int); i++){
+    cout << "\nStatistics:\n" << endl;
 
-        if(checkEmptyCol[i] == 1){
-   
-                finalCol.push_back(i);
-        }
+    for (int i = 0; i < newNumOfCols; i++) {
+        cout << "Maximum of value of col " << i + 1 << " is: " << highest[i] << " on " << highestDate[i] << endl;
+        cout << "Minimum of value of col " << i + 1 << " is: " << lowest[i] << " on " << lowestDate[i] << endl;
+        cout << "Average of value of col " << i + 1 << " is: " << dailyAverage[i] / newNumOfCols << endl;
+        cout << endl;
     }
 
-    fileRead2.close();
-    fileWrite2.close();
-
-
-   
-    fstream fileRead3 ("temp.csv", ios::in);
-    fstream fileWrite3 ("temp2.csv", ios::out);
-
-    while(getline(fileRead3, line)){
-        
-        row.clear();
-
-        stringstream str(line +','); // add , to make the sorting easier
-        while(getline(str, word, ','))
-            row.push_back(word);
-
-        for( int i = 0; i < finalCol.size(); i++){
-            newNumOfCols = finalCol.size();
-            fileWrite3 << row[finalCol[i]];
-            if(i != finalCol.size()-1)
-                fileWrite3 << ",";
-        }
-        fileWrite3 << "\n";
-        newNumOfRows++;
-    }
-
-
- 
-
-    fileRead3.close();
-    fileWrite3.close();
-    //remove temp file
-
-    /**********calculate highest and lowest****************/
-
-    fstream fileRead4 ("temp2.csv", ios::in);
-
-    int counter = 0;
-    float highest [newNumOfCols] = {0}; //we are gonna ignore colomn number 1 beacause it is a date
-    float loweset [newNumOfCols] = {100}; //we are gonna ignore colomn number 1 beacause it is a date
-    float dailyAverage [newNumOfCols] = {0}; 
-    string highestDate [newNumOfCols];
-    string lowesetDate [newNumOfCols];
-
-    for(int i = 1; i < newNumOfCols; i++){
-        loweset[i] = 100.00;
-    }
-
-    while(getline(fileRead4 , line)){
-        row.clear();
-        stringstream str(line +','); // add , to make sorting easier
-        while(getline(str, word, ','))
-            row.push_back(word);
-
-        for(int i = 1; i < row.size(); i++){
-            if(row[i].empty()){
-
-            }else{
-                dailyAverage[i] += stof(row[i]);
-
-                if( stof(row[i]) < loweset[i] ){
-                    loweset[i]  = stof(row[i]);
-                    lowesetDate[i] = row[0];
-                }
-                    
-                if( stof(row[i]) > highest[i] ){
-                    highest[i]  = stof(row[i]);
-                    highestDate[i] = row[0];
-                }
-
-            }
-        }
-
-    }
-
-    fileRead4.close();
-
-    cout<<"\n"<<endl;
-    
-    for(int i = 1; i < newNumOfCols; i++){
-        cout<<"maximum of value of col " << i+1 << " is : " <<  highest[i] << " on " <<highestDate[i] << endl;
-        cout<<"minimum of value of col " << i+1 << " is : " <<  loweset[i] << " on " <<lowesetDate[i] << endl;
-        // cout<<"average of value of col " << i+1 << " is : " <<  dailyAverage[i]/newNumOfRows << endl;
-        cout<<endl;
-    }
 
 
 
@@ -257,93 +230,42 @@ while(choice == "c"){
         }
         stringstream str2(row[0]); 
 
-        while(getline(str2, word, ' ')){
-            row.insert(row.begin()+1, word);
-            
-        }
-            string temp = row[1]; 
-            row[1] = row[2];
-            row[2] = temp; // swap data and time
+    fileRead.close();
+}
 
-        for( int i = 1; i < row.size(); i++){
-            newNumOfCols = row.size();
-            fileWrite5 << row[i];
-            if(i != row.size()-1)
-                fileWrite5 << ",";
-        }
-        fileWrite5 << "\n";
 
-    }
-    fileRead5.close();
-    fileWrite5.close();
+void splitDateAndTime(const string& inputPath, const string& outputPath) {
+    ifstream fileRead(inputPath);
+    ofstream fileWrite(outputPath);
 
-    cout << "Total number of rows: " << newNumOfRows << endl;
-    cout << "Total number of cols: " << newNumOfCols-1<< endl; //-1 because we split the date and time
-    
-    /************************Write output data*************************/
-
-    fstream fileWrite6 (path + fname +"-output.csv", ios::out);
-    fstream fileWrite7 (path + fname +"-dailyAverage.csv", ios::out);
-
-    fileWrite6 << "File tested: " << fname << endl;
-    fileWrite6 << "Total number of rows: " << newNumOfRows << endl;
-    fileWrite6 << "Total number of cols: " << newNumOfCols-1<< endl;
-
-    for(int i = 2; i < newNumOfCols-1; i++){
-        fileWrite6<<endl;
-        fileWrite6<<"maximum of value of col " << i+1 << " is : " <<  highest[i-1] << " on " <<highestDate[i-1] << endl;
-        fileWrite6<<"minimum of value of col " << i+1 << " is : " <<  loweset[i-1] << " on " <<lowesetDate[i-1] << endl;
-        // fileWrite6<<"average of value of col " << i+1 << " is : " <<  dailyAverage[i-1]/newNumOfRows << endl;
-        // fileWrite7<<"average of value of col " << i+1 << " is : " <<  dailyAverage[i-1]/newNumOfRows << endl;
-        fileWrite6<<endl;
+    if (!fileRead.is_open()) {
+        cout << "Unable to open input file for splitting date and time" << endl;
+        return;
     }
 
-
-
-    fileWrite6.close();
-    fileWrite7.close();
-
-    /*************************get average of each day**********************/
-
-    fstream fileWrite8 ("dailyAverage.csv", ios::out);
-    fstream fileRead8 (path + fname + "-processed.csv", ios::in);
-    string  day = "";
-    string temp = "1";
-    vector<vector<string>> dates;
-    int counter2 = 0;
-
-    while(getline(fileRead8 , line)){
-        
-        row.clear();
-        stringstream str(line +','); // add , to make sorting easier
-        while(getline(str, word, ',')){
+    string line;
+    while (getline(fileRead, line)) {
+        vector<string> row;
+        stringstream str(line + ',');
+        string word;
+        while (getline(str, word, ','))
             row.push_back(word);
+
+        stringstream str2(row[0]);
+        string date, time;
+        str2 >> date >> time;
+        row.erase(row.begin());
+        row.insert(row.begin() + 1, date);
+        row.insert(row.begin() + 2, time);
+
+        for (int i = 0; i < row.size(); i++) {
+            fileWrite << row[i];
+            if (i != row.size() - 1)
+                fileWrite << ",";
         }
-        day = row[0];
-
-        if(temp != day){
-            dates.push_back(row[0]);
-            temp = day;
-        }
-
+        fileWrite << endl;
     }
 
-    for (int i = 0; i < dates.size(); i++)
-    {
-       cout<<dates[i][0]<<endl;
-    }
-    
-
-    /***********************Remove temp file*************************/
-
-
-    remove("temp2.csv");
-    remove("temp.csv"); 
-
-    
-    cout<<"Press c to continue or e to quit"<<endl;
-    cin>>choice;
-
-    }
-
+    fileRead.close();
+    fileWrite.close();
 }
